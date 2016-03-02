@@ -1,8 +1,9 @@
 var express = require('express');
 var router = express.Router();
+var models = require('../server/models/index');
 
 router.get('/books', function(req, res, next) {
-  Books().select().then(function(results){
+  models.books.findAll({}).then(function(results){
     res.render('books/index', {books: results});
   });
 });
@@ -12,35 +13,57 @@ router.get('/books/new', function(req, res, next) {
 });
 
 router.post('/books', function(req, res, next) {
-  Books().insert(req.body).then(function(result){
+  models.books.create(req.body).then(function(result){
     res.redirect('/books');
   });
 });
 
 router.get('/books/:id', function (req, res, next) {
-  Books().where('id', req.params.id).first().then(function(result){
-    res.render('books/show', { book: result });
+  models.books.find({
+    where: {
+      id: req.params.id
+    }
+  }).then(function(book) {
+    res.render('books/show', { book: book });
   });
-})
+});
 
 router.get('/books/:id/edit', function (req, res) {
-  Books().where('id', req.params.id).first().then(function(result){
-    res.render('books/edit', { book: result });
+  models.books.find({
+    where: {
+      id: req.params.id
+    }
+  })
+  .then(function(book) {
+    console.log(book);
+    res.render('books/edit', { book: book });
   });
-})
+});
 
 router.post('/books/:id', function (req, res) {
-  Books().where('id', req.params.id).update(req.body)
-  .then(function(result){
-    res.redirect('/books');
+  models.books.find({
+    where: {
+      id: req.params.id
+    }
+  }).then(function(book) {
+    if(book) {
+      book.updateAttributes( req.body)
+      .then(function() {
+        res.redirect('/books');
+      });
+    }
   });
 });
 
 router.post('/books/:id/delete', function (req, res) {
-  Books().where('id', req.params.id).del()
-  .then(function (result) {
-    res.redirect('/books');
+  models.books.destroy({
+    where: {
+      id: req.params.id
+    }
   })
-})
+  .then(function() {
+    res.redirect('/books');
+  });
+});
 
 module.exports = router;
